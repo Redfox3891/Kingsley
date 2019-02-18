@@ -1,2 +1,2 @@
 # Kingsley
-Trading System for Commodities Market
+Forecast and Analytics
