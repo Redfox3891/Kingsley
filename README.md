@@ -1,2 +1,2 @@
-# Kingsley
-Forecast and Analytics
+# Macroeconomic_forecast
+Growth, Inflation, Currency and Share Price
