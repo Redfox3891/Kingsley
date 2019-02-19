@@ -1,0 +1,110 @@
+import pandas as pd
+
+import seaborn as sns
+import matplotlib
+import matplotlib.pyplot as plt
+
+import numpy as np
+import itertools
+import sklearn.covariance
+from sklearn import preprocessing
+from sklearn import datasets
+
+import scipy as sp
+import scipy.stats as stats
+
+import time
+import datetime
+
+import statsmodels.api as sm
+import statsmodels.tsa.stattools as ts
+
+from ipykernel import kernelapp as app
+import statsmodels.api as sm
+import seaborn as sb
+sb.set_style(‘darkgrid’)
+import seaborn as sns; sns.set()
+import configparser
+import bt
+
+In [3]:
+
+#INDEX LOGIC/PRINCIPLES
+#The building blocks of the index component is the Arms Index as an indicator of overall market sentiment in other words,the use of the advanced-declining (AD_Ratio)and AD Volume(Message) Ratio
+#The AD_Ratio for the S&P components will serve the purpose of analysing sentiment
+#Re-balances each stock based on BULLISH_INTENSITY and count of BULL_SCORED_MESSAGES
+#Compare the Index with the SPY over the specified start period (2010,12,31)to end period of (2017,03,31)
+
+#INDEX CALCULATION BASIS based on Principles
+#Filter the S&P Components from the entire dataset
+#AD_Ratio=data_file[l_BULLISH_INTENSITY]/data_file[l_BEARISH_INTENSITY]
+#ADV_Ratio=data_file[l_BULL_SCORED_MESSAGES]/data_file[l_BEAR_SCORED_MESSAGES]
+#BULL_SCORED_MESSAGES/BEAR_SCORED_MESSAGES = ratio of ADVANCED/DECLINING MESSAGE VOLUME (ADV)
+#Monthly rebalancing of the index
+#sma = pd.rolling_mean(data_file, 76)
+#strat = bt.Strategy(‘stock’, [bt.algos.RunMonthly(),
+# bt.algos.SelectAll(),
+# bt.algos.WeighEqually(),
+# bt.algos.StatTotalReturn(),
+# bt.algos.Rebalance()])
+In [4]:
+#filtering just the S&P Components in the tweetdata
+data = pd.read_csv(‘twitter_withretweets_monthly_comp.csv’)
+start = datetime.datetime(2010,12,31)
+end = datetime.datetime(2017,3,31)
+
+In [5]:
+
+# INDEX CALCULATION I
+#create a list of the most relevant data ordered by recent values
+# pack pall data points into a highly scalable column based data frame
+l_TIMESTAMP_UTC = []
+l_BULLISH_INTENSITY = []
+l_BEARISH_INTENSITY = []
+l_BULL_MINUS_BEAR = []
+l_BULL_SCORED_MESSAGES = []
+l_BEAR_SCORED_MESSAGES = []
+l_BULL_BEAR_MSG_RATIO = []
+l_TOTAL_SCANNED_MESSAGES =[]
+index_stockvar = pd.DataFrame({‘TIMESTAMP_UTC’ : l_TIMESTAMP_UTC,
+‘BULLISH_INTENSITY’ : l_BULLISH_INTENSITY,
+‘BEARISH_INTENSITY’ : l_BEARISH_INTENSITY,
+‘BULL_MINUS_BEAR’ : l_BULL_MINUS_BEAR,
+‘BULL_SCORED_MESSAGES’ : l_BULL_SCORED_MESSAGES,
+‘BEAR_SCORED_MESSAGES’ : l_BEAR_SCORED_MESSAGES,
+‘BULL_BEAR_MSG_RATIO’ : l_BULL_BEAR_MSG_RATIO,
+‘TOTAL_SCANNED_MESSAGES’ : l_TOTAL_SCANNED_MESSAGES})
+# check if data is sorted in ascending mode
+index_stockvar[‘TIMESTAMP_UTC’] = index_stockvar[‘TIMESTAMP_UTC’].apply(lambda x:datetime.strptime(x, ‘%Y-%m-%d’))
+index_stockvar.head()
+
+# INDEX CALCULATION II
+#The advanced-declining (AD_Ratio)and AD Volume(Message) Ratio
+stockvar = pd.DataFrame(np.random.randn(50, 4), columns=list(‘ABCD’))
+MOD_INTENSITY = (data[l_BULLISH_INTENSITY] + data[l_BEARISH_INTENSITY])/2
+AD_Ratio=data[l_BULLISH_INTENSITY]/data[l_BEARISH_INTENSITY]
+ADV_Ratio=data[l_BULL_SCORED_MESSAGES]/data[l_BEAR_SCORED_MESSAGES]
+#INDEX CALCULATION —returns
+d_ret = data[AD_Ratio].pct_change(1) # 1 for ONE DAY lookback
+m_ret = data[AD_Ratio].pct_change(31) # 21 for ONE MONTH lookback
+y_ret = data[AD_Ratio].pct_change(252) # 252 for ONE YEAR lookback
+# INDEX CALCULATION ——plot (Implied Volatility)
+#Two-dimensional co-ordinate system to generate implied volatilities simulateneously for a number of times(time-period)and AD_Ratio values
+#Index signal_1: Time values between 31, 90 & 252-day lookback
+
+AD_Ratio=np.linspace(1,2,3)
+time=np.linspace(31,90,120)
+AD_Ratio, time=np.meshgrid(AD_Ratio,time)
+AD_Ratio[:2]
+v=(AD_Ratio-100)**2/(100*AD_Ratio)/ time
+from mpl_toolkits.mplot3d import Axes3D
+fig = plt.figure(figsize=(9,6))
+ax=fig.gca(projection=’3d’)
+surf=ax.plot_surface(AD_Ratio,time,v,rstride=2,cstride=2,cmap=plt.cm.coolwarm,linewidth=0.5, antialiased=True)
+ax.set_xlabel(‘AD_Ratio’)
+ax.set_ylabel(‘time’)
+ax.set_xlabel(‘implied volatility’)
+fig.colorbar(surf,shrink=0.5,aspect=5)
+import pylab
+pylab.show()
+
